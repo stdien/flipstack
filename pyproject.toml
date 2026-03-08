@@ -1,0 +1,86 @@
+[project]
+name = "flipstack"
+version = "0.1.0"
+description = "Pancake sorting solver — finding shortest flip sequences on pancake graphs"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "cayleypy>=0.1.0",
+    "numpy>=2.4.2",
+    "rich>=14.3.3",
+    "scikit-learn>=1.8.0",
+    "torch>=2.10.0",
+    "typer>=0.24.1",
+    "xgboost>=3.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.151.9",
+    "pytest>=9.0.2",
+    "ruff>=0.15.4",
+    "ty>=0.0.20",
+    "wandb>=0.25.0",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    # Core
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes — unused imports, undefined names
+    "I",     # isort — import sorting
+    "UP",    # pyupgrade — modernize syntax
+    "B",     # bugbear — common bugs
+    # Security & quality
+    "S",     # bandit — security checks
+    "A",     # no builtin shadowing
+    "C4",    # comprehension improvements
+    "RUF",   # ruff-specific rules
+    # Best practices
+    "PIE",   # misc lint — unnecessary pass, no-op
+    "PT",    # pytest style
+    "PGH",   # pygrep-hooks — specific type: ignore / noqa
+    "C90",   # mccabe — function complexity
+    "BLE",   # blind except
+    "ASYNC", # async anti-patterns
+    # Framework-specific (no-op if not used)
+    "DJ",    # django
+    "AIR",   # airflow
+    "FAST",  # fastapi
+    "NPY",   # numpy
+    "LOG",   # logging best practices
+    "G",     # logging format
+    "ICN",   # import conventions (numpy as np, etc.)
+    "EXE",   # shebang checks
+    "YTT",   # sys.version checks
+    # Style & simplification
+    "SIM",   # simplify if/else, loops
+    "PTH",   # pathlib instead of os.path
+    "RET",   # return best practices
+    "RSE",   # raise best practices
+    "PERF",  # performance anti-patterns
+    "FURB",  # modernize/simplify
+    "FLY",   # string concatenation to f-strings
+    # Documentation
+    "D",     # docstring format (google convention)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: marks tests as slow (deselect with '-m \"not slow\"')"]

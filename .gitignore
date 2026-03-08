@@ -1,0 +1,30 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Tools
+.ruff_cache/
+.ty_cache/
+.hypothesis/
+
+# Environment
+.env
+
+# IDEs
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Data & experiments
+data/
+experiments/checkpoints/
+wandb/

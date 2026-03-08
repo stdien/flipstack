@@ -1,0 +1,27 @@
+data_path = "data/test.csv"
+output_dir = "experiments/solutions"
+model_dir = "experiments/checkpoints"
+n_min = 5
+n_max = 100
+
+[beam]
+beam_width = 1024
+max_steps = 200
+max_moves = 3
+use_filter = true
+timeout = 300.0
+
+[gpu_beam]
+beam_width = 4096
+max_steps = 200
+max_moves = 0
+timeout = 300.0
+device = "cuda"
+
+[training]
+num_samples = 100000
+epochs = 1000
+batch_size = 1024
+lr = 0.001
+seed = 42
+device = "cpu"
