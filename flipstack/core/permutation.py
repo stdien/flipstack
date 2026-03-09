@@ -100,6 +100,49 @@ def as_compute_dtype(perm: np.ndarray) -> np.ndarray:
     return perm.astype(np.int16)
 
 
+def perm_to_index(perm: np.ndarray) -> int:
+    """Encode permutation as Lehmer code index.
+
+    Args:
+        perm: Permutation array [0..n-1].
+
+    Returns:
+        Integer index in [0, n!).
+    """
+    n = len(perm)
+    available = list(range(n))
+    index = 0
+    for i in range(n):
+        k = available.index(int(perm[i]))
+        index = index * (n - i) + k
+        available.pop(k)
+    return index
+
+
+def index_to_perm(index: int, n: int, dtype: np.typing.DTypeLike = np.int8) -> np.ndarray:
+    """Decode Lehmer code index to permutation.
+
+    Args:
+        index: Integer index in [0, n!).
+        n: Permutation size.
+        dtype: Output array dtype.
+
+    Returns:
+        Permutation array [0..n-1].
+    """
+    available = list(range(n))
+    perm = np.empty(n, dtype=dtype)
+    for i in range(n):
+        fact = 1
+        for j in range(2, n - i):
+            fact *= j
+        k = index // fact
+        index = index % fact
+        perm[i] = available[k]
+        available.pop(k)
+    return perm
+
+
 def inverse_perm(perm: np.ndarray) -> np.ndarray:
     """Compute inverse permutation.
 

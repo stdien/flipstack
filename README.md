@@ -39,6 +39,31 @@ uv run python -m flipstack.cli evaluate --solution path/to/solution.csv
 uv run python -m flipstack.cli merge
 ```
 
+## Optimal Solutions Dataset
+
+Pre-computed optimal solution tries for training policy/value networks are available on Hugging Face:
+[stanidiener/flipstack-trie](https://huggingface.co/datasets/stanidiener/flipstack-trie)
+
+| File | n | Perms | Trie Nodes | Size |
+|------|---|-------|------------|------|
+| `trie_n10_full.trie` | 10 | 3.6M (all) | 3.6M | 101 MB |
+| `trie_n20.trie` | 20 | 100k | 29M | 908 MB |
+| `trie_n25.trie` | 25 | 100k | 63M | 2.2 GB |
+| `trie_n30.trie` | 30 | 100k | 113M | 4.5 GB |
+
+Download a `.trie` file and load it as a PyTorch DataLoader:
+
+```python
+from flipstack.training.trie_dataset import create_dataloader
+
+dl = create_dataloader("trie_n10_full.trie", batch_size=1024)
+for states, policies, distances in dl:
+    # states:    (B, n) int64 — permutation tokens
+    # policies:  (B, n-1) float32 — optimal move distribution
+    # distances: (B,) float32 — optimal distance from identity
+    ...
+```
+
 ## Scripts
 
 Utilities and standalone solvers in `scripts/`:
@@ -49,6 +74,7 @@ Utilities and standalone solvers in `scripts/`:
 | `shorten_solutions.py` | Shorten existing solutions via suffix re-solving |
 | `gap_only_dfs.cpp` | C++ DFS solver using gap-reducing moves only (OpenMP) |
 | `gap_slack_dfs.cpp` | C++ DFS solver with configurable slack for non-reducing moves (OpenMP) |
+| `gap_enumerate_all.cpp` | Solve + enumerate all optimal paths + build binary trie (OpenMP) |
 
 ## Project Structure
 

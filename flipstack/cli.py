@@ -283,5 +283,110 @@ def _greedy_solve(perm: np.ndarray) -> list[int] | None:
     return None
 
 
+@app.command("solve-optimal")
+def solve_optimal(
+    n: Annotated[int, typer.Option(help="Permutation size")] = 5,
+    num: Annotated[int, typer.Option(help="Number of random permutations")] = 120,
+    max_slack: Annotated[int, typer.Option(help="Max slack above gap_h (-1 = unlimited)")] = -1,
+    max_solutions: Annotated[int, typer.Option(help="Max solutions per perm")] = 10000,
+    no_enumerate: Annotated[bool, typer.Option(help="Only count, don't enumerate")] = False,
+    output: Annotated[Path, typer.Option(help="Output JSON path")] = Path("solutions.json"),
+    save_interval: Annotated[int, typer.Option(help="Save every N perms")] = 100,
+    seed: Annotated[int, typer.Option(help="Random seed")] = 42,
+    workers: Annotated[int | None, typer.Option(help="Worker processes")] = None,
+) -> None:
+    """Solve random permutations optimally with Numba DFS."""
+    import logging
+
+    from flipstack.search.optimal_dfs import solve_optimal_batch
+
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    results = solve_optimal_batch(
+        n=n,
+        num_perms=num,
+        max_slack=max_slack,
+        max_solutions=max_solutions,
+        do_enumerate=not no_enumerate,
+        output_path=output,
+        save_interval=save_interval,
+        seed=seed,
+        num_workers=workers,
+    )
+    solved = sum(1 for r in results if r["sol_len"] >= 0)
+    console.print(f"Solved {solved}/{len(results)} permutations -> {output}")
+
+
+@app.command("build-trie")
+def build_trie_cmd(
+    solutions: Annotated[Path, typer.Option(help="Input solutions JSON")],
+    output: Annotated[Path, typer.Option(help="Output .trie file")],
+) -> None:
+    """Build binary trie from solver JSON output."""
+    import json
+
+    from flipstack.training.trie_builder import build_trie, save_trie
+
+    with solutions.open() as f:
+        data = json.load(f)
+
+    n = data["n"]
+
+    def _iter_solutions():
+        for r in data["results"]:
+            if r["sol_len"] >= 0 and not r.get("truncated", False) and "solutions" in r:
+                yield r["perm"], r["solutions"]
+
+    trie = build_trie(_iter_solutions(), n)
+    save_trie(trie, output)
+    console.print(
+        f"Trie: {trie.num_nodes} nodes, {trie.num_fwd_edges} fwd edges -> {output}",
+    )
+
+
+@app.command("build-dataset")
+def build_dataset(
+    n: Annotated[int, typer.Option(help="Permutation size")] = 5,
+    num: Annotated[int, typer.Option(help="Number of random permutations")] = 120,
+    max_slack: Annotated[int, typer.Option(help="Max slack above gap_h (-1 = unlimited)")] = -1,
+    max_solutions: Annotated[int, typer.Option(help="Max solutions per perm")] = 10000,
+    output: Annotated[Path, typer.Option(help="Output .trie file")] = Path("data/trie.trie"),
+    seed: Annotated[int, typer.Option(help="Random seed")] = 42,
+    workers: Annotated[int | None, typer.Option(help="Worker processes")] = None,
+) -> None:
+    """End-to-end: solve optimally + build trie."""
+    import logging
+    import tempfile
+
+    from flipstack.search.optimal_dfs import solve_optimal_batch
+    from flipstack.training.trie_builder import build_trie, save_trie
+
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+    # Step 1: solve
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+
+    results = solve_optimal_batch(
+        n=n, num_perms=num, max_slack=max_slack, max_solutions=max_solutions,
+        do_enumerate=True, output_path=tmp_path, seed=seed, num_workers=workers,
+    )
+
+    # Step 2: build trie from results
+    def _iter_solutions():
+        for r in results:
+            if r["sol_len"] >= 0 and not r.get("truncated", False) and "solutions" in r:
+                yield r["perm"], r["solutions"]
+
+    trie = build_trie(_iter_solutions(), n)
+    save_trie(trie, output)
+
+    # Cleanup temp file
+    tmp_path.unlink(missing_ok=True)
+
+    console.print(
+        f"Dataset: {trie.num_nodes} nodes, {trie.num_fwd_edges} fwd edges -> {output}",
+    )
+
+
 if __name__ == "__main__":
     app()
